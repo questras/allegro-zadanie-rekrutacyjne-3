@@ -65,6 +65,8 @@ class GithubApiService:
             `UserNotFoundServiceException`: when desired user is not found.
             `ApiRateLimitExceededServiceException`: when api calls limit was
                 exceeded for current token.
+            `UnprocessableEntityServiceException`: when api call gets response
+                with 422 status code.
         """
 
         # Set page to 0 if given page number is negative.
