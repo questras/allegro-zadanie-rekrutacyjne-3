@@ -35,3 +35,13 @@ class BadCredentialsServiceException(Exception):
     def __init__(self):
         message = "Bad credentials were provided."
         super().__init__(message)
+
+
+class UnprocessableEntityServiceException(Exception):
+    """
+    Exception raised in a service, when call to a service
+    returned code 422: Unprocessable Entity.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)

@@ -9,7 +9,8 @@ import github
 from .exceptions import (
     UserNotFoundServiceException,
     ApiRateLimitExceededServiceException,
-    BadCredentialsServiceException
+    BadCredentialsServiceException,
+    UnprocessableEntityServiceException
 )
 
 
@@ -80,6 +81,13 @@ class GithubApiService:
             raise UserNotFoundServiceException()
         except github.RateLimitExceededException:
             raise ApiRateLimitExceededServiceException()
+        except github.GithubException as e:
+            if e.status == 422:
+                # Catch unprocessable entity errors from api and propagate
+                # further e.g pagination page exceeded limit.
+                raise UnprocessableEntityServiceException(e.data.get('message'))
+            else:
+                raise e
 
         return repositories
 
