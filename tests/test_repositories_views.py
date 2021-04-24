@@ -1,3 +1,7 @@
+"""
+Module with tests related to `repositories_app.views`.
+"""
+
 from unittest import mock, TestCase
 
 from repositories_app.app import create_app
