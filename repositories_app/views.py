@@ -92,3 +92,46 @@ def user_repositories_view(username):
         'repositories_count': len(repositories),
         'username': username
     }
+
+
+@github_blueprint.route('/stars/<string:username>', methods=['GET'])
+def user_stars_view(username):
+    """
+    View to get given user's sum of stars in all user's repositories.
+    The sum of stars is obtained from `GithubApiService` class.
+
+    Result is a json in following format:
+    {
+        "stars": 3,
+        "username": "given-username"
+    }
+
+    If given user does not exist, response with 404 code is sent.
+    If the request cannot be correctly processed by `GithubApiService`,
+        then response with 422 code and specific message is sent.
+    If there are problems with github api token e.g bad token or token
+        with exceeded api calls limit, then response with 500 code is sent.
+    """
+
+    api = GithubApiService(
+        github_api_token=current_app.config['GITHUB_API_TOKEN']
+    )
+
+    try:
+        stars = api.get_user_stars(username)
+    except UserNotFoundServiceException:
+        abort(404)
+    except BadCredentialsServiceException:
+        # Problem with token.
+        abort(500)
+    except ApiRateLimitExceededServiceException:
+        # Exceeded api calls limit.
+        abort(500)
+    except UnprocessableEntityServiceException as e:
+        # Api could not process the request correctly.
+        abort(422, str(e))
+
+    return {
+        'stars': stars,
+        'username': username
+    }

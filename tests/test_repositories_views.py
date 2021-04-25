@@ -122,3 +122,89 @@ class UserRepositoriesViewTests(TestCase):
         r = self.client.get(self.url)
         self.assertEqual(r.status_code, 422)
         self.assertEqual(r.json['message'], 'test-message')
+
+
+class UserStarsViewTests(TestCase):
+    """
+    Tests for view `repositories_app.views.user_stars_view`.
+    """
+
+    def setUp(self) -> None:
+        self.client = create_app().test_client()
+        self.url = '/api/v1/github/stars/test'
+
+    @mock.patch('repositories_app.views.GithubApiService')
+    def test_get_correct_data(self, service_mock):
+        service_mock.return_value.get_user_stars.return_value = 10
+
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 200)
+
+        want = {
+            'username': 'test',
+            'stars': 10
+        }
+        got = r.json
+        self.assertEqual(want, got)
+
+    @mock.patch('repositories_app.views.GithubApiService')
+    def test_zero_stars_gives_correct_response(self, service_mock):
+        service_mock.return_value.get_user_stars.return_value = 0
+
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 200)
+
+        want = {
+            'username': 'test',
+            'stars': 0
+        }
+        got = r.json
+        self.assertEqual(want, got)
+
+    @mock.patch('repositories_app.views.GithubApiService')
+    def test_user_not_found_returns_404(self, service_mock):
+        def exception_side_effect(*args):
+            raise UserNotFoundServiceException()
+
+        service_mock.return_value. \
+            get_user_stars.side_effect = exception_side_effect
+
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.json['message'], 'User not found')
+
+    @mock.patch('repositories_app.views.GithubApiService')
+    def test_bad_credentials_error_returns_500(self, service_mock):
+        def exception_side_effect(*args):
+            raise BadCredentialsServiceException()
+
+        service_mock.return_value. \
+            get_user_stars.side_effect = exception_side_effect
+
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 500)
+        self.assertEqual(r.json['message'], 'Server error')
+
+    @mock.patch('repositories_app.views.GithubApiService')
+    def test_api_rate_limit_exceeded_error_returns_500(self, service_mock):
+        def exception_side_effect(*args):
+            raise ApiRateLimitExceededServiceException()
+
+        service_mock.return_value. \
+            get_user_stars.side_effect = exception_side_effect
+
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 500)
+        self.assertEqual(r.json['message'], 'Server error')
+
+    @mock.patch('repositories_app.views.GithubApiService')
+    def test_unprocessable_entity_error_returns_422(self, service_mock):
+        def exception_side_effect(*args):
+            raise UnprocessableEntityServiceException('test-message')
+
+        service_mock.return_value. \
+            get_user_stars.side_effect = exception_side_effect
+
+        r = self.client.get(self.url)
+        self.assertEqual(r.status_code, 422)
+        self.assertEqual(r.json['message'], 'test-message')
