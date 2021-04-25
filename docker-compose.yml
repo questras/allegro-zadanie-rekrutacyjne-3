@@ -1,0 +1,17 @@
+# docker-compose for non-debug mode.
+
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: flask run
+    working_dir: /code/
+    volumes:
+      - .:/code
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=run.py
+      - GITHUB_API_TOKEN=${GITHUB_API_TOKEN}
+      - FLASK_RUN_HOST=0.0.0.0
